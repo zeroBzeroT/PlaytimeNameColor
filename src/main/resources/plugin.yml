@@ -3,5 +3,5 @@ version: ${project.version}
 main: org.zerobzerot.playtimenamecolor.PlaytimeNameColor
 api-version: 1.16
 prefix: PNC
-authors: [bierdosenhalter]
+authors: [bierdosenhalter, F64_Rx, XSilverFalconX]
 description: A spigot plugin where players are rewarded with additional name colors for their joining date and playing time.
