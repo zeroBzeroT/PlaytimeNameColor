@@ -8,6 +8,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -34,22 +35,35 @@ public final class PlaytimeNameColor extends JavaPlugin implements Listener {
         maxJoindate = getConfig().getInt("joindate");
 
         getServer().getPluginManager().registerEvents(this, this);
+
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                getServer().getOnlinePlayers().forEach(player -> setNameColor(player));
+            }
+        }.runTaskTimer(this, 600, 6000);
+
     }
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
-            Player player = event.getPlayer();
-
-            double joindate = (int) ((System.currentTimeMillis() - player.getFirstPlayed()) / 1000L);
-            double playtime = player.getStatistic(Statistic.PLAY_ONE_TICK) / 20d;
-
-            int indexPlaytime = (int) Math.floor((colors.size() - 1) * Math.min(1d, playtime / (maxPlaytime * 60d * 60d)));
-            int indexJoindate = (int) Math.floor((colors.size() - 1) * Math.min(1d, joindate / (maxJoindate * 24d * 60d * 60d)));
-
-            int index = Math.min(indexJoindate, indexPlaytime);
-
-            player.setDisplayName(colors.get(index) + player.getName() + ChatColor.RESET);
+            setNameColor(event.getPlayer());
         });
     }
+
+    private void setNameColor(Player player) {
+
+        double joindate = (int) ((System.currentTimeMillis() - player.getFirstPlayed()) / 1000L);
+        double playtime = player.getStatistic(Statistic.PLAY_ONE_TICK) / 20d;
+
+        int indexPlaytime = (int) Math.floor((colors.size() - 1) * Math.min(1d, playtime / (maxPlaytime * 60d * 60d)));
+        int indexJoindate = (int) Math.floor((colors.size() - 1) * Math.min(1d, joindate / (maxJoindate * 24d * 60d * 60d)));
+
+        int index = Math.min(indexJoindate, indexPlaytime);
+
+        player.setDisplayName(colors.get(index) + player.getName() + ChatColor.RESET);
+
+    }
+
 }
