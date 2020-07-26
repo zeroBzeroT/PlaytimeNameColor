@@ -7,9 +7,17 @@ updates:
       time: "12:00"
       timezone: "Europe/Berlin"
     assignees:
+      - "bierdosenhalter"
       - "blockparole"
+      - "DarkiBoi"
+      - "Krazzzzymonkey"
+      - "Pr3roxDLC"
     reviewers:
+      - "bierdosenhalter"
       - "blockparole"
+      - "DarkiBoi"
+      - "Krazzzzymonkey"
+      - "Pr3roxDLC"
     commit-message:
       prefix: "maven"
       include: "scope"
