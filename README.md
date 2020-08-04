@@ -6,6 +6,7 @@ A spigot plugin where players are rewarded with additional name colors for their
 
 - all ranks below are usable via /nc command
 - /nc command without arguments displays available colors
+- once you have bold name u can use it with the other colors
 
 color|joindate [d]|playtime [h]|
 --|--|--|
