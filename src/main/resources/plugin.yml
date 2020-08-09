@@ -5,3 +5,10 @@ api-version: 1.16
 prefix: PNC
 authors: [bierdosenhalter, F64_Rx, XSilverFalconX]
 description: A spigot plugin where players are rewarded with additional name colors for their joining date and playing time.
+commands:
+  nc:
+    description: Sets the color of the players name in the chat
+    usage: /nc
+  mute:
+    description: With that command if you can mute and unmute player
+    usage: /mute <Player>
