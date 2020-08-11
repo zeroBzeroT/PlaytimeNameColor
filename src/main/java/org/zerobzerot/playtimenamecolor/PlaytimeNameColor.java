@@ -175,6 +175,8 @@ public final class PlaytimeNameColor extends JavaPlugin implements Listener {
 
                 sender.sendMessage(message.toString());
             }
+
+            return true;
         } else if (cmd.getName().equalsIgnoreCase("mute") && (sender instanceof ConsoleCommandSender || sender.isOp())) {
             if (args.length == 1) {
                 if (!muted.contains(args[0].toLowerCase())) {
@@ -190,6 +192,8 @@ public final class PlaytimeNameColor extends JavaPlugin implements Listener {
             } else {
                 sender.sendMessage(pluginPrefix + "Use " + ChatColor.GOLD + "/mute <Player>" + ChatColor.RESET + " to mute a player.");
             }
+
+            return true;
         } else if (cmd.getName().equalsIgnoreCase("unmute") && (sender instanceof ConsoleCommandSender || sender.isOp())) {
             if (args.length == 1) {
                 if (muted.contains(args[0].toLowerCase())) {
@@ -199,9 +203,12 @@ public final class PlaytimeNameColor extends JavaPlugin implements Listener {
             } else {
                 sender.sendMessage(pluginPrefix + "Use " + ChatColor.GOLD + "/mute <Player>" + ChatColor.RESET + " to mute a player.");
             }
+
+            return true;
         }
 
-        return true;
+        // we did not process the command
+        return false;
     }
 
     private int getMaximumColorIndex(Player player) {
