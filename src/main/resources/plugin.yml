@@ -7,8 +7,11 @@ authors: [bierdosenhalter, F64_Rx, XSilverFalconX]
 description: A spigot plugin where players are rewarded with additional name colors for their joining date and playing time.
 commands:
   nc:
-    description: Sets the color of the players name in the chat
-    usage: /nc
+    description: Selects the color of the player name in the chat.
+    usage: /nc [Player] <Color>[-Bold]
   mute:
-    description: With that command if you can mute and unmute player
+    description: Use this command to mute a player.
     usage: /mute <Player>
+  unmute:
+      description: Use this command to unmute a player.
+      usage: /unmute <Player>

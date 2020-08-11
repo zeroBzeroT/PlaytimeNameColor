@@ -8,28 +8,45 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public final class PlaytimeNameColor extends JavaPlugin implements Listener {
     static final String pluginPrefix = ChatColor.WHITE + "<" + ChatColor.DARK_GREEN + "NC" + ChatColor.WHITE + "> " + ChatColor.RESET;
-
-    final List<String> defaultColors = Stream.of(ChatColor.GRAY, ChatColor.WHITE, ChatColor.GREEN, ChatColor.BLUE, ChatColor.DARK_PURPLE, ChatColor.GOLD, ChatColor.RED, ChatColor.YELLOW, ChatColor.AQUA).map(ChatColor::toString).collect(Collectors.toList());
-    List<String> colors;
-
     static final ArrayList<String> muted = new ArrayList<>();
-
+    final List<String> defaultColors = Stream.of(ChatColor.GRAY, ChatColor.WHITE, ChatColor.GREEN, ChatColor.BLUE, ChatColor.DARK_PURPLE, ChatColor.GOLD, ChatColor.RED, ChatColor.YELLOW, ChatColor.AQUA).map(ChatColor::toString).collect(Collectors.toList());
+    // sanitize color statements [also at the start of the name string from the old config]
+    // always uses first match group
+    final Pattern regexPattern = Pattern.compile("^(([Â]?§[0-9abcdefklmno])+).*$");
+    List<String> colors;
     int maxPlaytime;
     int maxJoinDate;
-
     boolean boldEnabled;
     boolean configModified = false;
+
+    public static ChatColor getChatColor(String color) {
+        try {
+            for (byte b = 0; b < ChatColor.values().length; b++) {
+                ChatColor c = ChatColor.values()[b];
+                if (c.name().equals(color))
+                    return c;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
 
     @Override
     public void onEnable() {
@@ -63,23 +80,39 @@ public final class PlaytimeNameColor extends JavaPlugin implements Listener {
         Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
             if (getConfig().getString(event.getPlayer().getUniqueId().toString()) != null) {
                 // If [UUID] entry exists then use this
-                player.setDisplayName(getConfig().getString(player.getUniqueId().toString()));
+                String sanitizedColor = sanitizeAndSaveColoredName(event.getPlayer(), getConfig().getString(player.getUniqueId().toString()), false);
+
+                // set the name
+                setColoredName(event.getPlayer(), sanitizedColor);
             } else if (getConfig().getString(event.getPlayer().getName()) != null) {
                 // If [Name] entry exists then take it and convert it to [UUID]
-                player.setDisplayName(getConfig().getString(player.getName()));
+                String coloredName = getConfig().getString(player.getName());
 
                 // delete the [Name] entry
                 getConfig().set(event.getPlayer().getName(), null);
 
-                // add [UUID] entry
-                getConfig().set(event.getPlayer().getUniqueId().toString(), player.getDisplayName());
+                // add [UUID] entry and set color
+                String sanitizedColor = sanitizeAndSaveColoredName(event.getPlayer(), coloredName, true);
+
+                // set the name
+                setColoredName(event.getPlayer(), sanitizedColor);
 
                 configModified = true;
             } else {
                 // set default color (first one)
-                setColoredPlayerName(event.getPlayer(), colors.get(0));
+                String sanitizedColor = sanitizeAndSaveColoredName(event.getPlayer(), colors.get(0), true);
+
+                // set the new name
+                setColoredName(event.getPlayer(), sanitizedColor);
             }
         });
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    public void onPlayerChat(AsyncPlayerChatEvent event) {
+        if (muted.contains(event.getPlayer().getName().toLowerCase())) {
+            event.setCancelled(true);
+        }
     }
 
     public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
@@ -93,7 +126,7 @@ public final class PlaytimeNameColor extends JavaPlugin implements Listener {
                     return true;
                 }
 
-                if (SetColorFromCommand(sender, args[1], target)) {
+                if (setColorFromCommand(sender, args[1], target)) {
                     sender.sendMessage(pluginPrefix + "The name color of " + target.getDisplayName() + " has been changed.");
                     target.sendMessage(pluginPrefix + "Your name color has been changed: " + target.getDisplayName() + ".");
                 } else {
@@ -101,13 +134,13 @@ public final class PlaytimeNameColor extends JavaPlugin implements Listener {
                 }
             } else if (args.length == 1 && sender instanceof Player) {
                 // Player Command
-                if (SetColorFromCommand(sender, args[0], (Player) sender)) {
+                if (setColorFromCommand(sender, args[0], (Player) sender)) {
                     sender.sendMessage(pluginPrefix + "Your name color has been changed: " + ((Player) sender).getDisplayName() + ".");
                 } else {
                     sender.sendMessage(pluginPrefix + "Incorrect color specification or insufficient playing time or joining date. Type " + ChatColor.GOLD + "/nc" + ChatColor.RESET + " for help.");
                 }
             } else {
-                // Show Colors / Help - TODO: Add playtime
+                // Show Colors / Help
                 StringBuilder message = new StringBuilder();
 
                 if (sender instanceof Player) {
@@ -142,7 +175,7 @@ public final class PlaytimeNameColor extends JavaPlugin implements Listener {
 
                 sender.sendMessage(message.toString());
             }
-        } else if (cmd.getName().equalsIgnoreCase("mute")) {
+        } else if (cmd.getName().equalsIgnoreCase("mute") && (sender instanceof ConsoleCommandSender || sender.isOp())) {
             if (args.length == 1) {
                 if (!muted.contains(args[0].toLowerCase())) {
                     Player target = Bukkit.getPlayer(args[0]);
@@ -157,7 +190,7 @@ public final class PlaytimeNameColor extends JavaPlugin implements Listener {
             } else {
                 sender.sendMessage(pluginPrefix + "Use " + ChatColor.GOLD + "/mute <Player>" + ChatColor.RESET + " to mute a player.");
             }
-        } else if (cmd.getName().equalsIgnoreCase("unmute")) {
+        } else if (cmd.getName().equalsIgnoreCase("unmute") && (sender instanceof ConsoleCommandSender || sender.isOp())) {
             if (args.length == 1) {
                 if (muted.contains(args[0].toLowerCase())) {
                     muted.remove(args[0].toLowerCase());
@@ -191,35 +224,39 @@ public final class PlaytimeNameColor extends JavaPlugin implements Listener {
         return playTimeS / (60d * 60d);
     }
 
-    private void setColoredPlayerName(Player player, String colorString) {
-        String name = player.getName();
+    private String sanitizeAndSaveColoredName(Player player, String colorString, boolean save) {
+        // use sanitize regex
+        Matcher matcher = regexPattern.matcher(colorString);
 
-        player.setDisplayName(colorString + name + ChatColor.RESET);
+        if (matcher.matches()) {
+            colorString = matcher.group(1);
 
-        getConfig().set(player.getName(), colorString + name + ChatColor.RESET);
-        configModified = true;
-    }
-
-    public static ChatColor getChatColor(String color) {
-        try {
-            for (byte b = 0; b < ChatColor.values().length; b++) {
-                ChatColor c = ChatColor.values()[b];
-                if (c.name().equals(color))
-                    return c;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+            // if we somehow managed to use ansi instead of utf-8
+            colorString = colorString.replace("Â", "");
+        } else {
+            colorString = colors.get(0);
         }
 
-        return null;
+        if (save) {
+            getConfig().set(player.getUniqueId().toString(), colorString);
+        }
+
+        configModified = true;
+
+        return colorString;
     }
 
-    private boolean SetColorFromCommand(CommandSender sender, String colorString, Player target) {
+    private void setColoredName(Player player, String colorString) {
+        player.setDisplayName(colorString + player.getName() + ChatColor.RESET);
+    }
+
+    private boolean setColorFromCommand(CommandSender sender, String colorString, Player target) {
         ChatColor color;
         boolean bold = false;
 
         if (colorString.contains("-")) {
             color = getChatColor(colorString.substring(0, colorString.indexOf("-")).toUpperCase());
+
             // we do not check what is behind the "-" and set bold, if available
             bold = boldEnabled;
         } else {
@@ -241,7 +278,9 @@ public final class PlaytimeNameColor extends JavaPlugin implements Listener {
             }
         }
 
-        setColoredPlayerName(target, color.toString() + (bold ? ChatColor.BOLD : ""));
+        String sanitizedColor = sanitizeAndSaveColoredName(target, color.toString() + (bold ? ChatColor.BOLD : ""), true);
+
+        setColoredName(target, sanitizedColor);
 
         return true;
     }
