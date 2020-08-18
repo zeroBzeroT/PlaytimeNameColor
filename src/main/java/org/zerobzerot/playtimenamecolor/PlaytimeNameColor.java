@@ -65,7 +65,7 @@ public final class PlaytimeNameColor extends JavaPlugin implements Listener {
 
         getServer().getPluginManager().registerEvents(this, this);
 
-        getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> {
+        getServer().getScheduler().runTaskTimerAsynchronously(this, () -> {
             if (configModified) {
                 saveConfig();
                 configModified = false;
