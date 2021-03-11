@@ -6,7 +6,7 @@
 
     <groupId>org.zeroBzeroT</groupId>
     <artifactId>0b0t_PlaytimeNameColor</artifactId>
-    <version>6.10</version>
+    <version>6.11</version>
     <packaging>jar</packaging>
 
     <name>PlaytimeNameColor</name>
