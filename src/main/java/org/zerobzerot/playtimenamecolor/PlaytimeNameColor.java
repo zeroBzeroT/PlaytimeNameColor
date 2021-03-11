@@ -177,7 +177,7 @@ public final class PlaytimeNameColor extends JavaPlugin implements Listener {
 
                 int maximumIndex = sender instanceof Player && !sender.isOp() ? getMaximumColorIndex((Player) sender) : colors.size() - 1;
 
-                if (boldEnabled && maximumIndex == colors.size() - 1) {
+                if (boldEnabled && maximumIndex >= boldIndex) {
                     message.append("[-BOLD]");
                 }
 
@@ -235,8 +235,8 @@ public final class PlaytimeNameColor extends JavaPlugin implements Listener {
         double playTime = getPlayTimeInHours(player);
         double joinDate = getJoinDateInDays(player);
 
-        int indexPlayTime = (int) Math.round((colors.size() - 1) - Math.log(maxPlaytime / playTime) / Math.log(2));
-        int indexJoinDate = (int) Math.round((colors.size() - 1) - Math.log(maxJoinDate / joinDate) / Math.log(2));
+        int indexPlayTime = (int) Math.round(colors.size() - 1 - Math.log(Math.ceil(maxPlaytime / playTime)) / Math.log(2));
+        int indexJoinDate = (int) Math.round(colors.size() - 1 - Math.log(Math.ceil(maxJoinDate / joinDate)) / Math.log(2));
 
         return Math.max(0, Math.min(colors.size() - 1, Math.min(indexPlayTime, indexJoinDate)));
     }
@@ -307,7 +307,7 @@ public final class PlaytimeNameColor extends JavaPlugin implements Listener {
 
         String sanitizedColor = sanitizeColoredName(color.toString() + (bold ? ChatColor.BOLD : ""));
 
-        return new AbstractMap.SimpleEntry<>(false, sanitizedColor);
+        return new AbstractMap.SimpleEntry<>(true, sanitizedColor);
     }
 
     private int getChatColorIndex(ChatColor color) {
