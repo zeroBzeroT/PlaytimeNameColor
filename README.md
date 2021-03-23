@@ -1,5 +1,9 @@
 # PlaytimeNameColor 🌈
 
+[![Download](https://img.shields.io/github/downloads/zeroBzeroT/PlaytimeNameColor/latest/total.svg?label=download%20latest&style=popout-square)](https://github.com/zeroBzeroT/PlaytimeNameColor/releases/latest)
+[![RepoSize](https://img.shields.io/github/languages/code-size/zeroBzeroT/PlaytimeNameColor.svg?label=repo%20size&style=popout-square)](https://github.com/zeroBzeroT/PlaytimeNameColor)
+[![HitCount](http://hits.dwyl.com/zeroBzeroT/PlaytimeNameColor.svg)](https://github.com/zeroBzeroT/PlaytimeNameColor)
+
 A spigot plugin where players are rewarded with additional name colors for their joining date and playing time.
 
 ## Suggestion for playtime and joindate
