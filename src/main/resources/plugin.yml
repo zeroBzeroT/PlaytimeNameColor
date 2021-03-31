@@ -9,6 +9,9 @@ commands:
   nc:
     description: Selects the color of the player name in the chat.
     usage: /nc [Player] <Color>[-Bold]
+  ic:
+    desctiption: Sets the color for the name of the item in tha main hand.
+    usage: /ic <Color>[-Bold]
   mute:
     description: Use this command to mute a player.
     usage: /mute <Player>

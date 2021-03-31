@@ -12,6 +12,8 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.AbstractMap;
@@ -26,6 +28,7 @@ public final class PlaytimeNameColor extends JavaPlugin implements Listener {
     public static final List<String> defaultColors = Stream.of(ChatColor.GRAY, ChatColor.WHITE, ChatColor.GREEN, ChatColor.BLUE, ChatColor.DARK_PURPLE, ChatColor.GOLD, ChatColor.RED, ChatColor.YELLOW, ChatColor.AQUA, ChatColor.DARK_RED).map(ChatColor::toString).collect(Collectors.toList());
     static final String pluginPrefix = ChatColor.WHITE + "<" + ChatColor.DARK_GREEN + "NC" + ChatColor.WHITE + "> " + ChatColor.RESET;
     static final ArrayList<String> muted = new ArrayList<>();
+
     // sanitize color statements [also at the start of the name string from the old config]
     // always uses first match group
     final Pattern regexPattern = Pattern.compile("^(([Â]?§[0-9abcdefklmno])+).*$");
@@ -34,6 +37,7 @@ public final class PlaytimeNameColor extends JavaPlugin implements Listener {
     int maxJoinDate;
     boolean boldEnabled;
     int boldIndex;
+    boolean itemColorEnabled;
     boolean configModified = false;
 
     public static ChatColor getChatColor(String color) {
@@ -57,6 +61,7 @@ public final class PlaytimeNameColor extends JavaPlugin implements Listener {
         getConfig().addDefault("join-date-d", 365 * 2);
         getConfig().addDefault("bold-enabled", true);
         getConfig().addDefault("bold-index", 8);
+        getConfig().addDefault("item-color-enabled", false);
 
         getConfig().options().copyDefaults(true);
         saveConfig();
@@ -66,6 +71,7 @@ public final class PlaytimeNameColor extends JavaPlugin implements Listener {
         maxJoinDate = getConfig().getInt("join-date-d");
         boldEnabled = getConfig().getBoolean("bold-enabled");
         boldIndex = getConfig().getInt("bold-index");
+        itemColorEnabled = getConfig().getBoolean("item-color-enabled");
 
         getServer().getPluginManager().registerEvents(this, this);
 
@@ -197,6 +203,28 @@ public final class PlaytimeNameColor extends JavaPlugin implements Listener {
             }
 
             return true;
+        } else if (itemColorEnabled && cmd.getName().equalsIgnoreCase("ic")) {
+            if (args.length == 1 && sender instanceof Player) {
+                // Player Command
+                AbstractMap.SimpleEntry<Boolean, String> colorResult = getColorFromCommand(sender, args[0], (Player) sender);
+
+                if (colorResult.getKey()) {
+                    String sanitizedColor = colorResult.getValue();
+
+                    if (setItemColor((Player) sender, sanitizedColor)) {
+                        sender.sendMessage(pluginPrefix + sanitizedColor + "The color of your item has been changed.");
+                    } else {
+                        sender.sendMessage(pluginPrefix + "There was an error when changing the color of your item.");
+                    }
+                } else {
+                    sender.sendMessage(pluginPrefix + "Incorrect color specification or insufficient playing time or joining date. Type " + ChatColor.GOLD + "/nc" + ChatColor.RESET + " for help.");
+                }
+            } else {
+                // Help
+                sender.sendMessage(pluginPrefix + "Type " + ChatColor.GOLD + "/nc" + ChatColor.RESET + " to see all available colors.");
+            }
+
+            return true;
         } else if (cmd.getName().equalsIgnoreCase("mute") && (sender instanceof ConsoleCommandSender || sender.isOp())) {
             if (args.length == 1) {
                 if (!muted.contains(args[0].toLowerCase())) {
@@ -229,6 +257,25 @@ public final class PlaytimeNameColor extends JavaPlugin implements Listener {
 
         // we did not process the command
         return false;
+    }
+
+    private boolean setItemColor(Player player, String colorString) {
+
+        if (player == null || player.getInventory() == null || player.getInventory().getItemInMainHand() == null)
+            return false;
+
+        ItemStack item = player.getInventory().getItemInMainHand();
+        String name = ChatColor.stripColor(item.getI18NDisplayName());
+
+        ItemMeta itemMeta = item.getItemMeta();
+
+        if (itemMeta == null)
+            return false;
+
+        itemMeta.setDisplayName(colorString + name + ChatColor.RESET);
+        item.setItemMeta(itemMeta);
+
+        return true;
     }
 
     public int getMaximumColorIndex(Player player) {

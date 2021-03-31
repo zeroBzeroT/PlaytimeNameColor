@@ -1,6 +1,7 @@
 # PlaytimeNameColor 🌈
 
 A spigot plugin where players are rewarded with additional name colors for their joining date and playing time.
+Includes also a mute command for ops to mute players.
 
 ## Suggestion for playtime and joindate
 
@@ -28,6 +29,7 @@ A spigot plugin where players are rewarded with additional name colors for their
 
 ```
 /nc [Name] <COLOR>[-BOLD]
+/mute [Name]
 ```
 
 ## Sources
