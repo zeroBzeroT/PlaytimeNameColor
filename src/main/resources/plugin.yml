@@ -3,8 +3,9 @@ version: ${project.version}
 main: org.zerobzerot.playtimenamecolor.PlaytimeNameColor
 api-version: 1.16
 prefix: PNC
-authors: [bierdosenhalter, F64_Rx, XSilverFalconX]
+authors: [ bierdosenhalter, F64_Rx, XSilverFalconX ]
 description: A spigot plugin where players are rewarded with additional name colors for their joining date and playing time.
+softdepend: [ DonationAPI ]
 commands:
   nc:
     description: Selects the color of the player name in the chat.
@@ -16,5 +17,5 @@ commands:
     description: Use this command to mute a player.
     usage: /mute <Player>
   unmute:
-      description: Use this command to unmute a player.
-      usage: /unmute <Player>
+    description: Use this command to unmute a player.
+    usage: /unmute <Player>

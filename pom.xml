@@ -6,7 +6,7 @@
 
     <groupId>org.zeroBzeroT</groupId>
     <artifactId>0b0t_PlaytimeNameColor</artifactId>
-    <version>6.13</version>
+    <version>6.14</version>
     <packaging>jar</packaging>
 
     <name>PlaytimeNameColor</name>
@@ -72,6 +72,13 @@
             <artifactId>paper-api</artifactId>
             <version>1.12.2-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.zeroBzeroT</groupId>
+            <artifactId>DonationAPI</artifactId>
+            <version>1.0</version>
+            <scope>system</scope>
+            <systemPath>${basedir}/lib/DonationAPI-1.0.jar</systemPath>
         </dependency>
     </dependencies>
 </project>
