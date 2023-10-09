@@ -18,10 +18,7 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.zerobzerot.donationapi.DonationAPI;
 
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -360,7 +357,12 @@ public final class PlaytimeNameColor extends JavaPlugin implements Listener {
     }
 
     private void saveColoredName(Player player, String colorString) {
-        getConfig().set(player.getUniqueId().toString(), colorString);
+        if (colorString.equals(colors.get(0))) {
+            getConfig().set(player.getUniqueId().toString(), null);
+        }
+        else {
+            getConfig().set(player.getUniqueId().toString(), colorString);
+        }
 
         configModified = true;
     }
