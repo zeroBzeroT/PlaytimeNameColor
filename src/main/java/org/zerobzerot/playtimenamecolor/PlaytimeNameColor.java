@@ -18,7 +18,10 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.zerobzerot.donationapi.DonationAPI;
 
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -28,8 +31,8 @@ import java.util.stream.Stream;
 // TODO: softdepend does not work
 
 public final class PlaytimeNameColor extends JavaPlugin implements Listener {
-    public static final List<String> defaultColors = Stream.of(ChatColor.GRAY, ChatColor.WHITE, ChatColor.GREEN, ChatColor.BLUE, ChatColor.DARK_PURPLE, ChatColor.GOLD, ChatColor.RED, ChatColor.YELLOW, ChatColor.AQUA, ChatColor.DARK_RED).map(ChatColor::toString).collect(Collectors.toList());
-    public static final List<String> defaultDonnorColors = Stream.of(ChatColor.DARK_AQUA, ChatColor.DARK_BLUE, ChatColor.DARK_GRAY, ChatColor.DARK_GREEN, ChatColor.LIGHT_PURPLE).map(ChatColor::toString).collect(Collectors.toList());
+    public static final List<String> defaultColors = Stream.of(ChatColor.GRAY, ChatColor.WHITE, ChatColor.GREEN, ChatColor.BLUE, ChatColor.DARK_PURPLE, ChatColor.GOLD, ChatColor.RED, ChatColor.YELLOW, ChatColor.AQUA, ChatColor.DARK_RED, ChatColor.DARK_GRAY).map(ChatColor::toString).collect(Collectors.toList());
+    public static final List<String> defaultDonorColors = Stream.of(ChatColor.DARK_AQUA, ChatColor.DARK_BLUE, ChatColor.DARK_GREEN, ChatColor.LIGHT_PURPLE).map(ChatColor::toString).collect(Collectors.toList());
 
     // TODO: add list for text decorations
 
@@ -40,11 +43,13 @@ public final class PlaytimeNameColor extends JavaPlugin implements Listener {
     // always uses first match group
     final Pattern regexPattern = Pattern.compile("^(([Â]?§[0-9abcdefklmno])+).*$");
     List<String> colors;
-    List<String> colorsDonnors;
+    List<String> colorsDonors;
     int maxPlaytime;
     int maxJoinDate;
     boolean boldEnabled;
+    boolean italicEnabled;
     int boldIndex;
+    int italicIndex;
     boolean itemColorEnabled;
     boolean configModified = false;
     Plugin donationAPI = null;
@@ -66,23 +71,27 @@ public final class PlaytimeNameColor extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
         getConfig().addDefault("colors", defaultColors);
-        getConfig().addDefault("colorsDonnors", defaultDonnorColors);
+        getConfig().addDefault("colorsDonors", defaultDonorColors);
 
-        getConfig().addDefault("play-time-h", 384 * 2);
-        getConfig().addDefault("join-date-d", 365 * 2);
+        getConfig().addDefault("play-time-h", 1536);
+        getConfig().addDefault("join-date-d", 1460);
         getConfig().addDefault("bold-enabled", true);
         getConfig().addDefault("bold-index", 8);
-        getConfig().addDefault("item-color-enabled", false);
+        getConfig().addDefault("item-color-enabled", true);
+        getConfig().addDefault("italic-enabled", true);
+        getConfig().addDefault("italic-index", 10);
 
         getConfig().options().copyDefaults(true);
         saveConfig();
 
         colors = getConfig().getStringList("colors");
-        colorsDonnors = getConfig().getStringList("colorsDonnors");
+        colorsDonors = getConfig().getStringList("colorsDonors");
         maxPlaytime = getConfig().getInt("play-time-h");
         maxJoinDate = getConfig().getInt("join-date-d");
         boldEnabled = getConfig().getBoolean("bold-enabled");
         boldIndex = getConfig().getInt("bold-index");
+        italicEnabled = getConfig().getBoolean("italic-enabled");
+        italicIndex = getConfig().getInt("italic-index");
         itemColorEnabled = getConfig().getBoolean("item-color-enabled");
 
         donationAPI = getServer().getPluginManager().getPlugin("DonationAPI");
@@ -187,9 +196,9 @@ public final class PlaytimeNameColor extends JavaPlugin implements Listener {
                     message.append(pluginPrefix).append(((Player) sender).getDisplayName()).append(", you played ").append(Math.round(getPlayTimeInHours((Player) sender))).append(" hours and you joined ").append(Math.round(getJoinDateInDays((Player) sender))).append(" days ago.\n");
                 }
 
-                boolean isActiveDonner = sender instanceof Player && isActiveDonner(((Player) sender).getUniqueId());
+                boolean isActiveDonor = sender instanceof Player && isActiveDonor(((Player) sender).getUniqueId());
 
-                if (isActiveDonner) {
+                if (isActiveDonor) {
                     message.append(pluginPrefix).append(ChatColor.AQUA).append(ChatColor.BOLD).append("Thank you for your donation!\n").append(ChatColor.RESET);
                 }
 
@@ -203,9 +212,15 @@ public final class PlaytimeNameColor extends JavaPlugin implements Listener {
 
                 int maximumIndex = sender instanceof Player && !sender.isOp() ? getMaximumColorIndex((Player) sender) : colors.size() - 1;
 
-                if (boldEnabled && (maximumIndex >= boldIndex || isActiveDonner)) {
+                if (italicEnabled && boldEnabled && (isActiveDonor || (maximumIndex >= italicIndex && maximumIndex >= boldIndex))) {
+                    // TODO: add decorations
+                    message.append("[-BOLD|ITALIC]");
+                } else if (boldEnabled && (maximumIndex >= boldIndex || isActiveDonor)) {
                     // TODO: add decorations
                     message.append("[-BOLD]");
+                } else if (italicEnabled && (maximumIndex >= italicIndex || isActiveDonor)) {
+                    // TODO: add decorations
+                    message.append("[-ITALIC]");
                 }
 
                 message.append(" (Available colors: ");
@@ -218,9 +233,9 @@ public final class PlaytimeNameColor extends JavaPlugin implements Listener {
                     message.append(color).append(color.name().toLowerCase()).append(ChatColor.RESET).append(", ");
                 }
 
-                // Show Donnor Colors
-                if (sender.isOp() || sender instanceof ConsoleCommandSender || isActiveDonner) {
-                    for (String colorString : colorsDonnors) {
+                // Show Donor Colors
+                if (sender.isOp() || sender instanceof ConsoleCommandSender || isActiveDonor) {
+                    for (String colorString : colorsDonors) {
                         ChatColor color = ChatColor.getByChar(colorString.charAt(colorString.length() - 1));
 
                         message.append(color).append(color.name().toLowerCase()).append(ChatColor.RESET).append(", ");
@@ -237,7 +252,7 @@ public final class PlaytimeNameColor extends JavaPlugin implements Listener {
         } else if (itemColorEnabled && cmd.getName().equalsIgnoreCase("ic")) {
             if (args.length == 1 && sender instanceof Player) {
                 // Player Command
-                AbstractMap.SimpleEntry<Boolean, String> colorResult = getColorFromCommand(sender, args[0], (Player) sender);
+                AbstractMap.SimpleEntry<Boolean, String> colorResult = getColorFromCommand(sender, args[0], (Player) sender, false);
 
                 if (colorResult.getKey()) {
                     String sanitizedColor = colorResult.getValue();
@@ -359,8 +374,7 @@ public final class PlaytimeNameColor extends JavaPlugin implements Listener {
     private void saveColoredName(Player player, String colorString) {
         if (colorString.equals(colors.get(0))) {
             getConfig().set(player.getUniqueId().toString(), null);
-        }
-        else {
+        } else {
             getConfig().set(player.getUniqueId().toString(), colorString);
         }
 
@@ -372,28 +386,36 @@ public final class PlaytimeNameColor extends JavaPlugin implements Listener {
     }
 
     private AbstractMap.SimpleEntry<Boolean, String> getColorFromCommand(CommandSender sender, String colorString, Player target) {
+        return getColorFromCommand(sender, colorString, target, true);
+    }
+
+    private AbstractMap.SimpleEntry<Boolean, String> getColorFromCommand(CommandSender sender, String colorString, Player target, Boolean useDonor) {
         ChatColor color;
         boolean bold = false;
+        boolean italic = false;
 
-        if (colorString.contains("-")) {
-            color = getChatColor(colorString.substring(0, colorString.indexOf("-")).toUpperCase());
-
-            // we do not check what is behind the "-" and set bold, if available
+        if (colorString.toUpperCase().contains("-B")) {
             bold = boldEnabled;
-        } else {
-            color = getChatColor(colorString.toUpperCase());
+        } else if (colorString.toUpperCase().contains("-I")) {
+            italic = italicEnabled;
         }
+
+        // we do not check what is behind the "-"
+        if (colorString.contains("-"))
+            colorString = colorString.substring(0, colorString.indexOf("-"));
+
+        color = getChatColor(colorString.toUpperCase());
 
         if (color == null)
             return new AbstractMap.SimpleEntry<>(false, "");
 
-        boolean isActiveDonner = sender instanceof Player && isActiveDonner(((Player) sender).getUniqueId());
+        boolean isActiveDonor = useDonor && sender instanceof Player && isActiveDonor(((Player) sender).getUniqueId());
 
         // TODO: make this more convenient
-        // donnor
-        if (isActiveDonner) {
-            // check if color is a normal or donnor color (to remove decorations)
-            if (!colors.contains(color.toString()) && !colorsDonnors.contains(color.toString())) {
+        // donor
+        if (isActiveDonor) {
+            // check if color is a normal or donor color (to remove decorations)
+            if (!colors.contains(color.toString()) && !colorsDonors.contains(color.toString())) {
                 return new AbstractMap.SimpleEntry<>(false, "");
             }
         }
@@ -408,16 +430,20 @@ public final class PlaytimeNameColor extends JavaPlugin implements Listener {
             if (bold && getMaximumColorIndex(target) < boldIndex) {
                 bold = false;
             }
+
+            if (italic && getMaximumColorIndex(target) < italicIndex) {
+                italic = false;
+            }
         }
 
-        String sanitizedColor = sanitizeColoredName(color.toString() + (bold ? ChatColor.BOLD : ""));
+        String sanitizedColor = sanitizeColoredName(color.toString() + (bold ? ChatColor.BOLD : "") + (italic ? ChatColor.ITALIC : ""));
 
         return new AbstractMap.SimpleEntry<>(true, sanitizedColor);
     }
 
-    public boolean isActiveDonner(UUID uuid) {
+    public boolean isActiveDonor(UUID uuid) {
         if (donationAPI != null && donationAPI.isEnabled()) {
-            return DonationAPI.Instance.isActiveDonner(uuid);
+            return DonationAPI.Instance.isActiveDonor(uuid);
         }
 
         return false;

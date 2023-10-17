@@ -9,10 +9,10 @@ softdepend: [ DonationAPI ]
 commands:
   nc:
     description: Selects the color of the player name in the chat.
-    usage: /nc [Player] <Color>[-Bold]
+    usage: /nc [Player] <Color>[-Bold|Italic]
   ic:
     desctiption: Sets the color for the name of the item in tha main hand.
-    usage: /ic <Color>[-Bold]
+    usage: /ic <Color>[-Bold|Italic]
   mute:
     description: Use this command to mute a player.
     usage: /mute <Player>

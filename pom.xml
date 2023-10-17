@@ -5,8 +5,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.zeroBzeroT</groupId>
-    <artifactId>0b0t_PlaytimeNameColor</artifactId>
-    <version>6.15</version>
+    <artifactId>PlaytimeNameColor</artifactId>
+    <version>6.16</version>
     <packaging>jar</packaging>
 
     <name>PlaytimeNameColor</name>
@@ -76,9 +76,9 @@
         <dependency>
             <groupId>org.zeroBzeroT</groupId>
             <artifactId>DonationAPI</artifactId>
-            <version>1.0</version>
+            <version>1.0.1</version>
             <scope>system</scope>
-            <systemPath>${basedir}/lib/DonationAPI-1.0.jar</systemPath>
+            <systemPath>${basedir}/lib/DonationAPI-1.0.1.jar</systemPath>
         </dependency>
     </dependencies>
 </project>
