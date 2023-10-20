@@ -28,13 +28,11 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 // TODO: remove colors and decorations that are not accessible for a specific player on login
-// TODO: softdepend does not work
+// TODO: add list for text decorations
 
 public final class PlaytimeNameColor extends JavaPlugin implements Listener {
     public static final List<String> defaultColors = Stream.of(ChatColor.GRAY, ChatColor.WHITE, ChatColor.GREEN, ChatColor.BLUE, ChatColor.DARK_PURPLE, ChatColor.GOLD, ChatColor.RED, ChatColor.YELLOW, ChatColor.AQUA, ChatColor.DARK_RED, ChatColor.DARK_GRAY).map(ChatColor::toString).collect(Collectors.toList());
     public static final List<String> defaultDonorColors = Stream.of(ChatColor.DARK_AQUA, ChatColor.DARK_BLUE, ChatColor.DARK_GREEN, ChatColor.LIGHT_PURPLE).map(ChatColor::toString).collect(Collectors.toList());
-
-    // TODO: add list for text decorations
 
     static final String pluginPrefix = ChatColor.WHITE + "<" + ChatColor.DARK_GREEN + "NC" + ChatColor.WHITE + "> " + ChatColor.RESET;
     static final ArrayList<String> muted = new ArrayList<>();
@@ -400,7 +398,7 @@ public final class PlaytimeNameColor extends JavaPlugin implements Listener {
             italic = italicEnabled;
         }
 
-        // we do not check what is behind the "-"
+        // Do not check what is behind the "-"
         if (colorString.contains("-"))
             colorString = colorString.substring(0, colorString.indexOf("-"));
 
@@ -409,30 +407,42 @@ public final class PlaytimeNameColor extends JavaPlugin implements Listener {
         if (color == null)
             return new AbstractMap.SimpleEntry<>(false, "");
 
-        boolean isActiveDonor = useDonor && sender instanceof Player && isActiveDonor(((Player) sender).getUniqueId());
+        // Only check players for the right color
+        if (sender instanceof Player && !sender.isOp()) {
+            boolean colorValid = false;
 
-        // TODO: make this more convenient
-        // donor
-        if (isActiveDonor) {
-            // check if color is a normal or donor color (to remove decorations)
-            if (!colors.contains(color.toString()) && !colorsDonors.contains(color.toString())) {
+            boolean isActiveDonor = useDonor && isActiveDonor(((Player) sender).getUniqueId());
+
+            // Donors
+            if (isActiveDonor) {
+                // check if color is a normal or donor color (to remove decorations)
+                if (colorsDonors.contains(color.toString())) {
+                    colorValid = true;
+                }
+            }
+
+            // PT/JD colors
+            if (!colorValid) {
+                int colorIndex = getChatColorIndex(color);
+
+                if (colorIndex >= 0 && colorIndex <= getMaximumColorIndex(target)) {
+                    colorValid = true;
+                }
+            }
+
+            // Return false, if that color cannot be used by the sender
+            if (!colorValid)
                 return new AbstractMap.SimpleEntry<>(false, "");
-            }
-        }
-        // normal name color
-        else if (!(sender instanceof ConsoleCommandSender) && !sender.isOp()) {
-            int colorIndex = getChatColorIndex(color);
 
-            if (colorIndex < 0 || colorIndex > getMaximumColorIndex(target)) {
-                return new AbstractMap.SimpleEntry<>(false, "");
-            }
+            // Check, if non donor is allowed to use italic and bold
+            if (!isActiveDonor) {
+                if (bold && (getMaximumColorIndex(target) < boldIndex)) {
+                    bold = false;
+                }
 
-            if (bold && getMaximumColorIndex(target) < boldIndex) {
-                bold = false;
-            }
-
-            if (italic && getMaximumColorIndex(target) < italicIndex) {
-                italic = false;
+                if (italic && (getMaximumColorIndex(target) < italicIndex)) {
+                    italic = false;
+                }
             }
         }
 
